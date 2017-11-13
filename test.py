@@ -2,18 +2,20 @@
 
 import os
 import numpy as np
+import yaml
 
 from project2 import Project2
 
 def secret_project2_test_1(BHP=float(os.environ['BHP1'])):
+
+    with open('inputs.yml') as f:
+        inputs = yaml.load(f)
+
+    inputs['wells']['bhp']['values'] = [BHP, BHP, BHP, BHP]
     
-    test = Project2('inputs.yml')
+    test = Project2(inputs)
     
     test.inputs['wells']['bhp']['values'] = [BHP, BHP, BHP, BHP]
-    
-    test.parse_inputs()
-    
-    test.fill_matrices()
     
     test.solve_one_step()
     
@@ -24,14 +26,13 @@ def secret_project2_test_1(BHP=float(os.environ['BHP1'])):
     return
 
 def secret_project2_test_2(BHP=float(os.environ['BHP2'])):
+
+    with open('inputs.yml') as f:
+        inputs = yaml.load(f)
+
+    inputs['wells']['bhp']['values'] = [BHP, BHP, BHP, BHP]
     
     test = Project2('inputs.yml')
-    
-    test.inputs['wells']['bhp']['values'] = [BHP, BHP, BHP, BHP]
-    
-    test.parse_inputs()
-    
-    test.fill_matrices()
     
     test.solve()
     
