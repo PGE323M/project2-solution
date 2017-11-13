@@ -32,7 +32,7 @@ def secret_project2_test_2(BHP=float(os.environ['BHP2'])):
 
     inputs['wells']['bhp']['values'] = [BHP, BHP, BHP, BHP]
     
-    test = Project2('inputs.yml')
+    test = Project2(inputs)
     
     test.solve()
     
