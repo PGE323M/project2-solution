@@ -11,7 +11,8 @@ install:
   - conda update -q conda
   - conda info -a
   - conda env create -f environment.yml
-  - source activate ${ASSIGNMENT}
+  - conda install ipython nbconvert numpy scipy matplotlib pyyaml
+  - pip install nose2
 before_script:
     - jupyter nbconvert --to python ${ASSIGNMENT}.ipynb
 script:
