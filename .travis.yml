@@ -11,8 +11,7 @@ install:
   - conda update -q conda
   - conda info -a
   - conda install ipython nbconvert numpy scipy matplotlib pyyaml
-  - pip install nose2
 before_script:
     - jupyter nbconvert --to python ${ASSIGNMENT}.ipynb
 script:
-  - nosetests -m "(?:\b|_)([Tt]est|[Ss]ecret)" test.py
+  - python test.py
