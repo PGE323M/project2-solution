@@ -10,7 +10,6 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda env create -f environment.yml
   - conda install ipython nbconvert numpy scipy matplotlib pyyaml
   - pip install nose2
 before_script:
