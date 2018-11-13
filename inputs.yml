@@ -1,9 +1,10 @@
 conversion factor: 6.33e-3
 
 fluid: 
-    compressibility: 0.000001 #psi^-1
-    viscosity: 1. #cp
-    formation volume factor: 1. 
+    water:
+        compressibility: 0.000001 #psi^-1
+        viscosity: 1. #cp
+        formation volume factor: 1. 
         
 reservoir: 
     permeability: 'Nechelik_perm.dat' #mD
@@ -34,15 +35,15 @@ boundary conditions:
 wells:
     rate:
         locations: 
-            - !!python/tuple [2500., 4050.]
+            - [2500., 4050.]
         values: [1000.]
         radii: [0.25]
     bhp:
         locations: 
-            - !!python/tuple [5536., 3500.]
-            - !!python/tuple [5474.,4708.]
-            - !!python/tuple [3600.,4937.]
-            - !!python/tuple [2400.,3322.]
+            -  [5536., 3500.]
+            -  [5474.,4708.]
+            -  [3600.,4937.]
+            -  [2400.,3322.]
         values: [2000., 2000., 2000., 2000.]
         radii: [0.25, 0.25, 0.25, 0.25]
         
@@ -56,5 +57,3 @@ numerical:
         
 plots: 
     frequency: 1
-        
-    

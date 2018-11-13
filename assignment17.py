@@ -14,25 +14,25 @@
 # 
 # Use the code you wrote in [Assignment 15](https://github.com/PGE323M-Fall2017/assignment15) and add additional functionality to incorporate the wells.  The wells section of the inputs will look something like:
 # 
-# ```python
-# inputs['wells'] = {
-#             'rate': {
-#                 'locations': [(0.0, 1.0), (2.0, 2.0)],
-#                 'values': [1000, 1000],
-#                 'radii': [0.25, 0.25]
-#             },
-#             'bhp': {
-#                 'locations': [(6250.0, 1.0)],
-#                 'values': [800],
-#                 'radii': [0.25],
-#                 'skin factor': 0.0
-#             }
-#         }
+# ```yml
+# 'wells':
+#     'rate':
+#         'locations': 
+#             - [0.0, 1.0]
+#             - [9999.0, 2.0]
+#         'values': [1000, 1000]
+#         'radii': [0.25, 0.25]
+#     'bhp':
+#         'locations': 
+#             - [6250.0, 1.0]
+#         'values': [800]
+#         'radii': [0.25]
+#         'skin factor': 0.0
 # ```
 # 
-# notice that all the values are Python lists so that multiple wells of each type can be included.  The `'locations'` keyword has a value that is a list of tuples.  Each tuple contains the $x,y$ Cartesian coordinate pair that gives the location of the well.  You must write some code that can take this $x,y$-pair and return the grid block number that the well resides in.  This should be general enough that changing the number of grids in the $x$ and $y$ directions still gives the correct grid block.  Once you know the grid block numbers for the wells, the changes to `fill_matrices()` should be relatively easy.
+# notice that all the values are Python lists so that multiple wells of each type can be included.  The `'locations'` keyword has a value that is a list of lists.  Each tuple contains the $x,y$ Cartesian coordinate pair that gives the location of the well.  You must write some code that can take this $x,y$-pair and return the grid block number that the well resides in.  This should be general enough that changing the number of grids in the $x$ and $y$ directions still gives the correct grid block.  Once you know the grid block numbers for the wells, the changes to `fill_matrices()` should be relatively easy.
 # 
-# All of the old tests from the last few assignments are still in place, so your code must run in the abscense of any well section in your inputs.
+# All of the old tests from the last few assignments are still in place, so your code must run in the absence of any well section in your inputs.
 
 # In[1]:
 
@@ -46,7 +46,7 @@ import yaml
 from assignment13 import OneDimReservoir
 
 
-# In[2]:
+# In[6]:
 
 
 class TwoDimReservoir(OneDimReservoir):
@@ -59,7 +59,6 @@ class TwoDimReservoir(OneDimReservoir):
         
         #stores input dictionary as class attribute
         if isinstance(inputs, str):
-            
             with open(inputs) as f:
                 self.inputs = yaml.load(f)
         else:
@@ -82,10 +81,13 @@ class TwoDimReservoir(OneDimReservoir):
     
     
     def parse_inputs(self):
+        '''
+            Stores inputs as data attributes
+        '''
         
-        self.viscosity = self.inputs['fluid']['viscosity']
-        self.formation_volume_factor = self.inputs['fluid']['formation volume factor']
-        self.compressibility = self.inputs['fluid']['compressibility'] 
+        self.viscosity = self.inputs['fluid']['water']['viscosity']
+        self.formation_volume_factor = self.inputs['fluid']['water']['formation volume factor']
+        self.compressibility = self.inputs['fluid']['water']['compressibility'] 
         self.nxgrids = self.inputs['numerical']['number of grids']['x']
         self.nygrids = self.inputs['numerical']['number of grids']['y']
         self.ngrids = self.nxgrids * self.nygrids
@@ -236,7 +238,7 @@ class TwoDimReservoir(OneDimReservoir):
 
            Can also accept user defined list of dx values.
 
-           TODO: Add ability to read dx values from file.
+           TODO: A ability to read dx values from file.
         """
         
         nygrids = self.nygrids
@@ -295,7 +297,7 @@ class TwoDimReservoir(OneDimReservoir):
         dx = self.delta_x.flatten()
         dy = self.delta_y.flatten()
         
-        if k[i] <= 0.0 and k[j] <= 0.0:
+        if k[i] <= 0.0 and k[j] <= 0:
             return 0.0
         else:
             if abs(i - j) <= 1:
@@ -323,7 +325,6 @@ class TwoDimReservoir(OneDimReservoir):
         dy = self.delta_y.flatten()
         
         volume = d[i] * dx[i] * dy[i]
-        
         
         return volume * phi[i] * c_t / B_alpha
     
@@ -460,30 +461,34 @@ class TwoDimReservoir(OneDimReservoir):
             Applies initial pressures to self.p
         '''
 
-        N = self.ngrids
+        N = self.ngrids 
 
         self.p = np.ones(N) * self.inputs['initial conditions']['pressure']
 
         return
 
 
-# In[3]:
+# In[14]:
 
 
 def test_compute_productivity_index():
     
-    from test import setup as setup
+    from test import TestSolution
     
-    parameters = setup()
+    t = TestSolution()
+    t.setUp()
+    
+    
+    parameters = t.inputs
     
     parameters['wells'] = {
             'rate': {
-                'locations': [(0.0, 1.0)],
+                'locations': [[0.0, 1.0]],
                 'values': [1000],
                 'radii': [0.25]
             },
             'bhp': {
-                'locations': [(6250.0, 1.0)],
+                'locations': [[6250.0, 1.0]],
                 'values': [800],
                 'radii': [0.25]
             }
@@ -508,4 +513,18 @@ def test_compute_productivity_index():
     np.testing.assert_allclose(problem.compute_productivity_index('bhp'), 3310.9, atol=0.5)
     
     return
+
+
+# In[16]:
+
+
+#test_compute_productivity_index()
+
+
+# In[9]:
+
+
+#problem = TwoDimReservoir('inputs.yml')
+#problem.solve()
+#problem.plot()
 
