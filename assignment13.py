@@ -1,12 +1,13 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
-# # Assignment 12
+# # Assignment 13
 
 # In[1]:
 
 
 import numpy as np
+import yaml
 import scipy.sparse
 import scipy.sparse.linalg
 import matplotlib.pyplot as plt
@@ -23,17 +24,22 @@ class OneDimReservoir():
             finite differences.
         '''
         
-        #stores input dictionary as class attribute
-        self.inputs = inputs
+        #stores input dictionary as class attribute, either read from a yaml file
+        #or directly from a Python dictonary
+        if isinstance(inputs, str):
+            with open(inputs) as f:
+                self.inputs = yaml.load(f)
+        else:
+            self.inputs = inputs
         
         #assigns class attributes from input data
         self.parse_inputs()
         
-        #calls fill matrix method (must be completely implemented to work)
-        self.fill_matrices()
-        
         #applies the initial reservoir pressues to self.p
         self.apply_initial_conditions()
+        
+        #calls fill matrix method (must be completely implemented to work)
+        self.fill_matrices()
         
         #create an empty list for storing data if plots are requested
         if 'plots' in self.inputs:
@@ -46,10 +52,11 @@ class OneDimReservoir():
             Stores inputs as data attributes
         '''
         
-        self.viscosity = self.inputs['fluid']['viscosity']
-        self.formation_volume_factor = self.inputs['fluid']['formation volume factor']
-        self.compressibility = self.inputs['fluid']['compressibility'] 
-        self.ngrids = self.inputs['numerical']['number of grids']
+        self.viscosity = self.inputs['fluid']['water']['viscosity']
+        self.formation_volume_factor = self.inputs['fluid']['water']['formation volume factor']
+        self.compressibility = self.inputs['fluid']['water']['compressibility'] 
+        self.Nx = self.inputs['numerical']['number of grids']['x']
+        self.N = self.Nx
         self.delta_t = self.inputs['numerical']['time step']
         
         #Read in 'unit conversion factor' if it exists in the input deck, 
@@ -82,7 +89,7 @@ class OneDimReservoir():
            TODO: Add ability to read dx values from file.
         """
         
-        ngrids = self.ngrids
+        ngrids = self.N
 
         #If dx is not defined by user, compute a uniform dx
         if 'delta x' not in self.inputs['numerical']:
@@ -98,8 +105,8 @@ class OneDimReservoir():
             length_delta_x_arr = delta_x_arr.shape[0]
             
             #For user input 'delta x' array, we need to ensure that its size
-            #agress with ngrids as determined from permeability/porosity values
-            assert length_delta_x_arr == ngrids, ("User defined 'delta x' array                                                    doesn't match 'number of grids'")
+            #agrees with ngrids as determined from permeability/porosity values
+            assert length_delta_x_arr == ngrids, ("User defined 'delta x' array                                                    doesn't match 'number of grids: 'x'")
 
         return delta_x_arr
     
@@ -126,7 +133,7 @@ class OneDimReservoir():
 
         #data is a constant array (homogeneous)
         else:
-            ngrids = self.inputs['numerical']['number of grids']
+            ngrids = self.N
             data = (input_name *  np.ones(ngrids))
             
         return data
@@ -174,7 +181,7 @@ class OneDimReservoir():
     
         
         #Pointer reassignment for convenience
-        N = self.ngrids
+        N = self.N
         factor = self.conversion_factor
 
         #Begin with a linked-list data structure for the transmissibilities,
@@ -190,46 +197,25 @@ class OneDimReservoir():
         bc_value_1 = bcs['left']['value']
         bc_value_2 = bcs['right']['value']
       
-        #Loop over all grid cells
-        for i in range(N):
-
-            #Apply left BC
-            if i == 0:
-                T[i, i+1] = -self.compute_transmissibility(i, i + 1)
-
-                if bc_type_1 == 'prescribed flux':
-                    T[i, i] = T[i,i] - T[i, i+1]
-                elif bc_type_1 == 'prescribed pressure':
-                    #Computes the transmissibility of the ith block
-                    T0 = self.compute_transmissibility(i, i)
-                    T[i, i] = T[i,i] - T[i, i+1] + 2.0 * T0
-                    Q[i] = 2.0 * T0 * bc_value_1 * factor
-                else:
-                    pass #TODO: Add error checking here if no bc is specified
-
-            #Apply right BC
-            elif i == (N - 1):
-                T[i, i-1] = -self.compute_transmissibility(i, i - 1)
-
-                if bc_type_2 == 'prescribed flux':
-                    T[i, i] = T[i,i] - T[i, i-1]
-                elif bc_type_2 == 'prescribed pressure':
-                    #Computes the transmissibility of the ith block
-                    T0 = self.compute_transmissibility(i, i)
-                    T[i, i] = T[i, i] - T[i, i-1] + 2.0 * T0
-                    Q[i] = 2.0 * T0 * bc_value_2 * factor
-                else:
-                    pass #TODO:Add error checking here if no bc is specified
-
-            #If there is no boundary condition compute interblock transmissibilties
+        for l in range(N):
+            if l == 0:
+                T[l, l + 1] = -self.compute_transmissibility(l, l+1)
+                if bc_type_1 == 'prescribed pressure':
+                    T0 = self.compute_transmissibility(l, l)
+                    T[l, l] = -2.0 * T0
+                    Q[l] = 2.0 * T0 * bc_value_1 * factor
+            elif l % (N - 1) == 0:
+                T[l, l - 1] = -self.compute_transmissibility(l, l-1)
+                if bc_type_2 == 'prescribed pressure':
+                    TN = self.compute_transmissibility(l, l)
+                    T[l, l] = -2.0 * TN
+                    Q[l] = 2.0 * TN * bc_value_2 * factor
             else:
-                T[i, i-1] = -self.compute_transmissibility(i, i-1)
-                T[i, i+1] = -self.compute_transmissibility(i, i+1)
-                T[i, i] = (self.compute_transmissibility(i, i-1) +
-                           self.compute_transmissibility(i, i+1))
-
-            #Compute accumulations
-            B[i] = self.compute_accumulation(i)
+                T[l, l + 1] = -self.compute_transmissibility(l, l+1)
+                T[l, l - 1] = -self.compute_transmissibility(l, l-1)
+            
+            T[l, l] = -np.sum(T[l])
+            B[l] = self.compute_accumulation(l)
 
         
         #Return sparse data-structures
@@ -238,7 +224,7 @@ class OneDimReservoir():
         self.Q = Q
         
         return
-        
+
             
                 
     def apply_initial_conditions(self):
@@ -246,7 +232,7 @@ class OneDimReservoir():
             Applies initial pressures to self.p
         '''
         
-        N = self.inputs['numerical']['number of grids']
+        N = self.N
         
         self.p = np.ones(N) * self.inputs['initial conditions']['pressure']
         
@@ -267,7 +253,7 @@ class OneDimReservoir():
         if self.inputs['numerical']['solver'] == 'explicit':
             self.p = self.p + dt * 1. / B.diagonal() * (Q - T.dot(self.p)) 
         elif self.inputs['numerical']['solver'] == 'implicit':
-            self.p = scipy.sparse.linalg.cg(T + B / dt, B.dot(self.p) / dt + Q, atol='legacy')[0]
+            self.p, _ = scipy.sparse.linalg.cg(T + B / dt, B.dot(self.p) / dt + Q, atol='legacy')
         elif 'mixed method' in self.inputs['numerical']['solver']:
             
             theta = self.inputs['numerical']['solver']['mixed method']['theta']
@@ -275,7 +261,7 @@ class OneDimReservoir():
             A = (1 - theta) * T + B / dt
             b = (B / dt - theta * T).dot(self.p) + Q
             
-            self.p = scipy.sparse.linalg.cg(A, b, atol='legacy')[0]
+            self.p, _ = scipy.sparse.linalg.cg(A, b, atol='legacy')
             
         return
             
@@ -309,4 +295,18 @@ class OneDimReservoir():
             Returns solution vector
         '''
         return self.p
+
+
+# # Example code execution
+# 
+# If you'd like to run your code in the notebook, perhaps creating a crude plot of the output, you can uncomment the following lines of code in the cell below.  You can also inspect the contents of `inputs.yml` and change the parameters to see how the solution is affected.
+
+# In[3]:
+
+
+#import matplotlib.pyplot as plt
+#%matplotlib inline
+#implicit = OneDimReservoir('inputs.yml')
+#implicit.solve()
+#implicit.plot()
 

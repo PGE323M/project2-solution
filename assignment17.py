@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Homework Assignment 17
@@ -12,7 +12,7 @@
 # 
 # To be clear, there is a constant-rate injector of 1000 ft$^3$/day at $x$ = 5000 ft, $y$ = 5000 ft and a constant BHP well (producer) with $p_w$ = 800 psi at $x$ = 9000 ft, $y$ = 9000 ft. Both wells have a radius of 0.25 ft and no skin factor.
 # 
-# Use the code you wrote in [Assignment 15](https://github.com/PGE323M-Fall2017/assignment15) and add additional functionality to incorporate the wells.  The wells section of the inputs will look something like:
+# Use the code you wrote in [Assignment 15](https://github.com/PGE323M-Students/assignment15) and add additional functionality to incorporate the wells.  The wells section of the inputs will look something like:
 # 
 # ```yml
 # 'wells':
@@ -60,7 +60,7 @@ class TwoDimReservoir(OneDimReservoir):
         #stores input dictionary as class attribute
         if isinstance(inputs, str):
             with open(inputs) as f:
-                self.inputs = yaml.load(f)
+                self.inputs = yaml.load(f, yaml.FullLoader)
         else:
             self.inputs = inputs
         
@@ -88,9 +88,9 @@ class TwoDimReservoir(OneDimReservoir):
         self.viscosity = self.inputs['fluid']['water']['viscosity']
         self.formation_volume_factor = self.inputs['fluid']['water']['formation volume factor']
         self.compressibility = self.inputs['fluid']['water']['compressibility'] 
-        self.nxgrids = self.inputs['numerical']['number of grids']['x']
-        self.nygrids = self.inputs['numerical']['number of grids']['y']
-        self.ngrids = self.nxgrids * self.nygrids
+        self.Nx = self.inputs['numerical']['number of grids']['x']
+        self.Ny = self.inputs['numerical']['number of grids']['y']
+        self.N = self.Nx * self.Ny
         self.delta_t = self.inputs['numerical']['time step']
         
         #Read in 'unit conversion factor' if it exists in the input deck, 
@@ -163,7 +163,7 @@ class TwoDimReservoir(OneDimReservoir):
             bool_arr_4 = grid_centers_y + dy[None,0,:] / 2.0 >  loc_y
             total_bool_arr += [np.all([bool_arr_1, bool_arr_2, bool_arr_3, bool_arr_4], axis=0)]
         
-        grid_numbers = np.arange(self.ngrids, dtype=np.int).reshape(-1, self.nxgrids)
+        grid_numbers = np.arange(self.N, dtype=np.int).reshape(-1, self.Nx)
         
         return grid_numbers[np.any(total_bool_arr, axis=0)]
     
@@ -215,7 +215,7 @@ class TwoDimReservoir(OneDimReservoir):
            TODO: Add ability to read dx values from file.
         """
         
-        nxgrids = self.nxgrids
+        nxgrids = self.Nx
 
         #If dx is not defined by user, compute a uniform dx
         if 'delta x' not in self.inputs['numerical']:
@@ -241,7 +241,7 @@ class TwoDimReservoir(OneDimReservoir):
            TODO: A ability to read dx values from file.
         """
         
-        nygrids = self.nygrids
+        nygrids = self.Ny
 
         #If dx is not defined by user, compute a uniform dx
         if 'delta y' not in self.inputs['numerical']:
@@ -279,7 +279,7 @@ class TwoDimReservoir(OneDimReservoir):
 
         #data is a constant array (homogeneous)
         else:
-            ngrids = self.ngrids
+            ngrids = self.N
             data = (input_name *  np.ones(ngrids))
             
         return data
@@ -337,9 +337,9 @@ class TwoDimReservoir(OneDimReservoir):
     
         
         #Pointer reassignment for convenience
-        N = self.ngrids
-        Nx = self.nxgrids
-        Ny = self.nygrids
+        N = self.N
+        Nx = self.Nx
+        Ny = self.Ny
         factor = self.conversion_factor
 
         #Begin with a linked-list data structure for the transmissibilities,
@@ -453,18 +453,6 @@ class TwoDimReservoir(OneDimReservoir):
         self.B = scipy.sparse.csr_matrix((B, (np.arange(N), np.arange(N))), shape=(N,N))
         self.Q = Q
         
-        return
-    
-    
-    def apply_initial_conditions(self):
-        '''
-            Applies initial pressures to self.p
-        '''
-
-        N = self.ngrids 
-
-        self.p = np.ones(N) * self.inputs['initial conditions']['pressure']
-
         return
 
 
