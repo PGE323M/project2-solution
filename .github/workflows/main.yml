@@ -6,18 +6,9 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: mamba-org/provision-with-micromamba@main
         with:
-          python-version: 3.6
           environment-file: environment.yml
-          activate-environment: $ASSIGNMENT
-      - name: Conda Info
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-          conda config --show-sources
-          conda config --show
       - name: Fetch Tests 
         shell: bash -l {0}
         run: |
@@ -27,4 +18,4 @@ jobs:
           -O --location "https://api.github.com/repos/PGE323M/${ASSIGNMENT}/contents/test.py"
       - name: Run Tests 
         shell: bash -l {0}
-        run: python test.py
+        run: python -m unittest test.py -vvv
