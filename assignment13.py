@@ -253,7 +253,7 @@ class OneDimReservoir():
         if self.inputs['numerical']['solver'] == 'explicit':
             self.p = self.p + dt * 1. / B.diagonal() * (Q - T.dot(self.p)) 
         elif self.inputs['numerical']['solver'] == 'implicit':
-            self.p, _ = scipy.sparse.linalg.cg(T + B / dt, B.dot(self.p) / dt + Q, atol='legacy')
+            self.p, _ = scipy.sparse.linalg.cg(T + B / dt, B.dot(self.p) / dt + Q, atol=1.0e-8)
         elif 'mixed method' in self.inputs['numerical']['solver']:
             
             theta = self.inputs['numerical']['solver']['mixed method']['theta']
@@ -261,7 +261,7 @@ class OneDimReservoir():
             A = (1 - theta) * T + B / dt
             b = (B / dt - theta * T).dot(self.p) + Q
             
-            self.p, _ = scipy.sparse.linalg.cg(A, b, atol='legacy')
+            self.p, _ = scipy.sparse.linalg.cg(A, b, atol=1.0e-8)
             
         return
             

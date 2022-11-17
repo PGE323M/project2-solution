@@ -60,7 +60,7 @@ class TwoDimReservoir(OneDimReservoir):
         #stores input dictionary as class attribute
         if isinstance(inputs, str):
             with open(inputs) as f:
-                self.inputs = yaml.load(f, yaml.FullLoader)
+                self.inputs = yaml.load(f)
         else:
             self.inputs = inputs
         
@@ -163,7 +163,7 @@ class TwoDimReservoir(OneDimReservoir):
             bool_arr_4 = grid_centers_y + dy[None,0,:] / 2.0 >  loc_y
             total_bool_arr += [np.all([bool_arr_1, bool_arr_2, bool_arr_3, bool_arr_4], axis=0)]
         
-        grid_numbers = np.arange(self.N, dtype=np.int).reshape(-1, self.Nx)
+        grid_numbers = np.arange(self.N, dtype=np.int64).reshape(-1, self.Nx)
         
         return grid_numbers[np.any(total_bool_arr, axis=0)]
     
@@ -220,7 +220,7 @@ class TwoDimReservoir(OneDimReservoir):
         #If dx is not defined by user, compute a uniform dx
         if 'delta x' not in self.inputs['numerical']:
             length = self.inputs['reservoir']['length']
-            delta_x = np.float(length) / nxgrids
+            delta_x = np.float64(length) / nxgrids
             delta_x_arr = np.ones(nxgrids) * delta_x
         else:
             #Convert to numpy array and ensure that the length of 
@@ -246,7 +246,7 @@ class TwoDimReservoir(OneDimReservoir):
         #If dx is not defined by user, compute a uniform dx
         if 'delta y' not in self.inputs['numerical']:
             height = self.inputs['reservoir']['height']
-            delta_y = np.float(height) / nygrids
+            delta_y = np.float64(height) / nygrids
             delta_y_arr = np.ones(nygrids) * delta_y
         else:
             #Convert to numpy array and ensure that the length of 
