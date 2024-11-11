@@ -94,7 +94,7 @@ class OneDimReservoir():
         #If dx is not defined by user, compute a uniform dx
         if 'delta x' not in self.inputs['numerical']:
             length = self.inputs['reservoir']['length']
-            delta_x = np.float(length) / ngrids
+            delta_x = np.float64(length) / ngrids
             delta_x_arr = np.ones(ngrids) * delta_x
         else:
             #Convert to numpy array and ensure that the length of 
@@ -106,7 +106,8 @@ class OneDimReservoir():
             
             #For user input 'delta x' array, we need to ensure that its size
             #agrees with ngrids as determined from permeability/porosity values
-            assert length_delta_x_arr == ngrids, ("User defined 'delta x' array                                                    doesn't match 'number of grids: 'x'")
+            assert length_delta_x_arr == ngrids, ("User defined 'delta x' array \
+                                                   doesn't match 'number of grids: 'x'")
 
         return delta_x_arr
     

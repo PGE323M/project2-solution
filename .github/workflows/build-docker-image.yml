@@ -1,0 +1,53 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - master # Adjust this as necessary
+
+jobs:
+
+  condition_check:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check_condition.outputs.proceed }}
+    steps:
+      - id: check_condition
+        name: Check Repository Name Condition
+        run: |
+          echo "proceed=true" >> $GITHUB_OUTPUT
+          if [[ "${{ github.repository }}" =~ assignment[0-9]+- ]]; then
+            echo "This repository is an student repository, skipping docker build."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    needs: condition_check
+    if: needs.condition_check.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+
+      # Convert repository name to lowercase and set it as an output
+      - name: Convert repository name to lowercase
+        id: repo_name
+        run: echo "repo_name_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          file: .devcontainer/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.repo_name_lower }}/python-devcontainer:latest
