@@ -16,7 +16,7 @@ jobs:
         name: Check Repository Name Condition
         run: |
           echo "proceed=true" >> $GITHUB_OUTPUT
-          if [[ "${{ github.repository }}" =~ assignment[0-9]+- ]]; then
+          if [[ "${{ github.repository }}" =~ project[0-9]+- ]]; then
             echo "This repository is an student repository, skipping docker build."
             echo "proceed=false" >> $GITHUB_OUTPUT
           fi
