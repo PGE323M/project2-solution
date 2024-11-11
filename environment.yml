@@ -1,0 +1,12 @@
+name: project2
+channels:
+  - conda-forge
+dependencies:
+  - numpy=2.1.1
+  - python=3.11.9
+  - ipython=8.25.0
+  - nbconvert=7.10.0
+  - pandas=2.2.2
+  - scipy=1.14.1
+  - matplotlib=3.9.2
+  - pyyaml=6.0.1

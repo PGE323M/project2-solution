@@ -1,0 +1,59 @@
+conversion factor: 6.33e-3
+
+fluid: 
+    water:
+        compressibility: 0.000001 #psi^-1
+        viscosity: 1. #cp
+        formation volume factor: 1. 
+        
+reservoir: 
+    permeability: 'Nechelik_perm.dat' #mD
+    #permeability: [0, 0, 0, 0, 0, 50., 50., 50, 0, 50, 50, 50, 0, 0, 0, 0] #mD
+    porosity: 'Nechelik_poro.dat'
+    #porosity: [0, 0, 0, 0, 0, 0.2, 0.2, 0.2, 0, 0.2, 0.2, 0.2, 0, 0, 0, 0]
+    height: 5753. #ft
+    length: 7060.5 #ft
+    depth: 100. #ft
+        
+initial conditions: 
+    pressure: 3700. #psi
+        
+boundary conditions: 
+    left: 
+        type: prescribed flux 
+        value: 0. #ft^3/day
+    right: 
+        type: prescribed flux
+        value: 0. #ft^3/day
+    top: 
+        type: prescribed flux
+        value: 0. #ft^3/day
+    bottom: 
+        type: prescribed flux
+        value: 0. #ft^3/day
+        
+wells:
+    rate:
+        locations: 
+            - [2500., 4050.]
+        values: [1000.]
+        radii: [0.25]
+    bhp:
+        locations: 
+            -  [4000., 3500.]
+            -  [5474.,4708.]
+            -  [3600.,4937.]
+            -  [2400.,3322.]
+        values: [2000., 2000., 2000., 2000.]
+        radii: [0.25, 0.25, 0.25, 0.25]
+        
+numerical: 
+    solver: 'implicit'
+    number of grids: 
+        x: 54
+        y: 22
+    time step: 1 #day
+    number of time steps : 200
+        
+plots: 
+    frequency: 1
